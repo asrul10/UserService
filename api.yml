@@ -1,0 +1,280 @@
+# This is the OpenAPI specification for your service. It is used to generate the client code.
+# To generate the server code, use the Gradle task `openApiGenerate`. The 
+# generated code will be placed in `build/generate-resources/main`.
+#
+# We will evaluate you based on how well you design your API.
+# 1. How well it follows REST principles.
+# 2. How easy it is to understand and use.
+#
+# References
+# 1. https://swagger.io/specification/
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: User Service
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/users/login:
+    post:
+      summary: User Login
+      operationId: LoginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginUserPayload"
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginUserResponse"
+        '400':
+          description: Bad Request, Unsuccessful login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Not found, user not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/users:
+    post:
+      summary: Register a new user
+      operationId: RegisterUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUserPayload"
+      responses:
+        '200':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterUserResponse"
+        '400':
+          description: Bad Request, validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '409':
+          description: Bad Request, User already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Get loggedin user data
+      operationId: GetUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully get user data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetUserResponse"
+        '403':
+          description: Forbidden, bearer token invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update looggedin user data
+      operationId: UpdateUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserPayload"
+      responses:
+        '200':
+          description: Successfully update user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateUserResponse"
+        '403':
+          description: Forbidden, bearer token invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '409':
+          description: Bad Request, phone number cannot be updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginUserPayload:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          minLength: 10
+          maxLength: 13
+          description: "Must start with +62"
+          x-oapi-codegen-extra-tags:
+            validate: "required,startswith=+62,min=10,max=13"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 64
+          description: "Containing at least 1 capital characters AND 1 number AND 1 special (non alpha-numeric) characters"
+          x-oapi-codegen-extra-tags:
+            validate: "required,min=6,max=64,contains-uppercase=1,contains-lowercase=1,contains-number=1,contains-special-char=1"
+      required:
+        - phoneNumber
+        - password
+
+    LoginUserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: "ID of the user"
+        accessToken:
+          type: string
+          description: "JWT access token"
+        refreshToken:
+          type: string
+          description: "JWT refresh token"
+      required:
+        - userId
+        - accessToken
+        - refreshToken
+
+    RegisterUserPayload:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          minLength: 10
+          maxLength: 13
+          description: "Must start with +62"
+          x-oapi-codegen-extra-tags:
+            validate: "required,startswith=+62,min=10,max=13"
+        fullName:
+          type: string
+          minLength: 3
+          maxLength: 60
+          x-oapi-codegen-extra-tags:
+            validate: "required,min=3,max=60"
+        password:
+          type: string
+          minLength: 6
+          maxLength: 64
+          description: "Containing at least 1 capital characters AND 1 number AND 1 special (non alpha-numeric) characters"
+          x-oapi-codegen-extra-tags:
+            validate: "required,min=6,max=64,contains-uppercase=1,contains-lowercase=1,contains-number=1,contains-special-char=1"
+      required:
+        - phoneNumber
+        - fullName
+        - password
+
+    RegisterUserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+      required:
+        - userId
+
+    GetUserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+        phoneNumber:
+          type: string
+        fullName:
+          type: string
+      required:
+        - userId
+        - phoneNumber
+        - fullName
+
+    UpdateUserPayload:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          minLength: 10
+          maxLength: 13
+          description: "Must start with +62"
+          x-oapi-codegen-extra-tags:
+            validate: "required,startswith=+62,min=10,max=13"
+        fullName:
+          type: string
+          minLength: 3
+          maxLength: 60
+          x-oapi-codegen-extra-tags:
+            validate: "required,min=3,max=60"
+      required:
+        - phoneNumber
+        - fullName
+
+    UpdateUserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+        phoneNumber:
+          type: string
+        fullName:
+          type: string
+      required:
+        - userId
+        - phoneNumber
+        - fullName
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
